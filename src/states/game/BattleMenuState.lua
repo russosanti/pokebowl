@@ -10,6 +10,8 @@ BattleMenuState = Class{__includes = BaseState}
 
 function BattleMenuState:init(battleState)
     self.battleState = battleState
+
+    local opponent = self.battleState.opponent.party.pokemon[1]
     
     self.battleMenu = Menu {
         x = VIRTUAL_WIDTH - 64,
@@ -23,6 +25,21 @@ function BattleMenuState:init(battleState)
                 onSelect = function()
                     gStateStack:pop()
                     gStateStack:push(TakeTurnState(self.battleState))
+                end
+            },
+            {
+                text = 'Catch',
+                disabled = self.battleState.player.party:isFull() or opponent.currentHP > opponent.HP * 0.25,
+                onSelect = function()
+                    gStateStack:pop()
+                    gStateStack:push(CatchState(self.battleState))
+                end,
+                onDisabledSelect = function()
+                    if self.battleState.player.party:isFull() then
+                        gStateStack:push(BattleMessageState('Your party is full!', function() end))
+                    else
+                        gStateStack:push(BattleMessageState('Your opponent is too strong!', function() end))
+                    end
                 end
             },
             {

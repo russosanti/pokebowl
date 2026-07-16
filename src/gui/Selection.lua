@@ -46,7 +46,16 @@ function Selection:update(dt)
         gSounds['blip']:stop()
         gSounds['blip']:play()
     elseif love.keyboard.wasPressed('return') or love.keyboard.wasPressed('enter') then
-        self.items[self.currentSelection].onSelect()
+        local selection = self.items[self.currentSelection]
+        
+        -- disable menu option and allow to show a message
+        if selection.disabled then
+            if selection.onDisabledSelect then
+                selection.onDisabledSelect()
+            end
+        elseif selection.onSelect then
+            selection.onSelect()
+        end
         
         gSounds['blip']:stop()
         gSounds['blip']:play()
@@ -58,16 +67,25 @@ function Selection:render()
     
     local currentY = self.y
 
-    for i = 1, #self.items do
+    for i, item in ipairs(self.items) do
         local paddedY = currentY + (self.gapHeight / 2) - self.font:getHeight() / 2
 
         -- draw selection marker if we're at the right index
+        love.graphics.setColor(1, 1, 1, 1)
         if self.showCursor and i == self.currentSelection then
             love.graphics.draw(gTextures['cursor'], self.x - 8, paddedY)
         end
 
-        love.graphics.printf(self.items[i].text, self.x, paddedY, self.width, 'center')
+        if item.disabled then
+            love.graphics.setColor(128/255, 128/255, 128/255, 1)
+        else
+            love.graphics.setColor(1, 1, 1, 1)
+        end
+
+        love.graphics.printf(item.text, self.x, paddedY, self.width, 'center')
 
         currentY = currentY + self.gapHeight
     end
+    -- reset to white
+    love.graphics.setColor(1, 1, 1, 1)
 end
