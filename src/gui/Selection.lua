@@ -2,9 +2,6 @@
     CS50 2D
     Pokemon
 
-    Author: Colton Ogden
-    cogden@cs50.harvard.edu
-
     The Selection class gives us a list of textual items that link to callbacks;
     this particular implementation only has one dimension of items (vertically),
     but a more robust implementation might include columns as well for a more
@@ -25,6 +22,8 @@ function Selection:init(def)
     self.gapHeight = self.height / #self.items
 
     self.currentSelection = 1
+
+    self.showCursor = def.showCursor == nil and true or def.showCursor
 end
 
 function Selection:update(dt)
@@ -55,13 +54,15 @@ function Selection:update(dt)
 end
 
 function Selection:render()
+    love.graphics.setFont(self.font)
+    
     local currentY = self.y
 
     for i = 1, #self.items do
         local paddedY = currentY + (self.gapHeight / 2) - self.font:getHeight() / 2
 
         -- draw selection marker if we're at the right index
-        if i == self.currentSelection then
+        if self.showCursor and i == self.currentSelection then
             love.graphics.draw(gTextures['cursor'], self.x - 8, paddedY)
         end
 

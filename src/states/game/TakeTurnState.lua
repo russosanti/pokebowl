@@ -212,11 +212,13 @@ function TakeTurnState:victory()
 
                         -- set our exp to whatever the overlap is
                         self.playerPokemon.currentExp = self.playerPokemon.currentExp - self.playerPokemon.expToLevel
-                        self.playerPokemon:levelUp()
+
+                        -- Level up stat increase
+                        local HPIncrease, attackIncrease, defenseIncrease, speedIncrease = self.playerPokemon:levelUp()
 
                         gStateStack:push(BattleMessageState('Congratulations! Level Up!',
                         function()
-                            self:fadeOutWhite()
+                            self:showLevelUpMenu(HPIncrease, attackIncrease, defenseIncrease, speedIncrease)
                         end))
                     else
                         self:fadeOutWhite()
@@ -244,4 +246,32 @@ function TakeTurnState:fadeOutWhite()
             r = 1, g = 1, b = 1
         }, 1, function() end))
     end))
+end
+
+function TakeTurnState:showLevelUpMenu(HPIncrease, attackIncrease, defenseIncrease, speedIncrease)
+    -- Create each stat increase menu item
+    local function stat(name, finalValue, increase)
+        return {
+            text = string.format('%s: %d + %d --> %d', name, finalValue - increase, increase, finalValue),
+            onSelect = function()
+                gStateStack:pop()
+                self:fadeOutWhite()
+            end
+        }
+    end
+
+    gStateStack:push(MenuState {
+        x = 0,
+        y = VIRTUAL_HEIGHT - 64,
+        width = VIRTUAL_WIDTH,
+        height = 64,
+        font = gFonts['small'],
+        showCursor = false,
+        items = {
+            stat('HP', self.playerPokemon.HP, HPIncrease),
+            stat('Attack', self.playerPokemon.attack, attackIncrease),
+            stat('Defense', self.playerPokemon.defense, defenseIncrease),
+            stat('Speed', self.playerPokemon.speed, speedIncrease)
+        }
+    })
 end
