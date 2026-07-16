@@ -40,6 +40,7 @@ require 'src.states.entity.PlayerWalkState'
 require 'src.states.game.BattleState'
 require 'src.states.game.BattleMenuState'
 require 'src.states.game.BattleMessageState'
+require 'src.states.game.CatchState'
 require 'src.states.game.DialogueState'
 require 'src.states.game.FadeInState'
 require 'src.states.game.FadeOutState'
@@ -69,6 +70,7 @@ gTextures = {
     ['bamboon-front'] = love.graphics.newImage('graphics/pokemon/bamboon-front.png'),
     ['cardiwing-back'] = love.graphics.newImage('graphics/pokemon/cardiwing-back.png'),
     ['cardiwing-front'] = love.graphics.newImage('graphics/pokemon/cardiwing-front.png'),
+    ['pokeball'] = love.graphics.newImage('graphics/ball.png'),
 }
 
 gFrames = {

@@ -1,15 +1,14 @@
 --[[
     CS50 2D
     Pokemon
-
-    Author: Colton Ogden
-    cogden@cs50.harvard.edu
 ]]
 
 TakeTurnState = Class{__includes = BaseState}
 
-function TakeTurnState:init(battleState)
+function TakeTurnState:init(battleState, options)
     self.battleState = battleState
+    options = options or {}
+    self.opponentOnly = options.opponentOnly or false
     self.playerPokemon = self.battleState.player.party.pokemon[1]
     self.opponentPokemon = self.battleState.opponent.party.pokemon[1]
 
@@ -35,40 +34,71 @@ function TakeTurnState:init(battleState)
 end
 
 function TakeTurnState:enter(params)
-    self:attack(self.firstPokemon, self.secondPokemon, self.firstSprite, self.secondSprite, self.firstBar, self.secondBar,
+    if self.opponentOnly then
+        self:takeOpponentTurn()
+    else
+        self:takeNormalTurn()
+    end
+end
 
+function TakeTurnState:takeNormalTurn()
+    self:performAttack(
+        self.firstPokemon,
+        self.secondPokemon,
+        self.firstSprite,
+        self.secondSprite,
+        self.secondBar,
+        function()
+            self:performAttack(
+                self.secondPokemon,
+                self.firstPokemon,
+                self.secondSprite,
+                self.firstSprite,
+                self.firstBar,
+                function()
+                    self:returnToBattleMenu()
+                end
+            )
+        end
+    )
+end
+
+function TakeTurnState:takeOpponentTurn()
+    self:performAttack(
+        self.opponentPokemon,
+        self.playerPokemon,
+        self.opponentSprite,
+        self.playerSprite,
+        self.battleState.playerHealthBar,
+        function()
+            self:returnToBattleMenu()
+        end
+    )
+end
+
+function TakeTurnState:performAttack(attacker, defender, attackerSprite, defenderSprite, defenderBar, onBattleContinues)
+    self:attack(attacker, defender, attackerSprite, defenderSprite, defenderBar,
     function()
-
-        -- remove the message
+        -- remove the attack message
         gStateStack:pop()
 
-        -- check to see whether the player or enemy died
+        -- remove this state when the battle has ended; the victory or faint
+        -- sequence continues through its retained callbacks
         if self:checkDeaths() then
             gStateStack:pop()
             return
         end
 
-        self:attack(self.secondPokemon, self.firstPokemon, self.secondSprite, self.firstSprite, self.secondBar, self.firstBar,
-    
-        function()
-
-            -- remove the message
-            gStateStack:pop()
-
-            -- check to see whether the player or enemy died
-            if self:checkDeaths() then 
-                gStateStack:pop()
-                return
-            end
-
-            -- remove the last attack state from the stack
-            gStateStack:pop()
-            gStateStack:push(BattleMenuState(self.battleState))
-        end)
+        onBattleContinues()
     end)
 end
 
-function TakeTurnState:attack(attacker, defender, attackerSprite, defenderSprite, attackerkBar, defenderBar, onEnd)
+function TakeTurnState:returnToBattleMenu()
+    gStateStack:pop()
+    gStateStack:push(BattleMenuState(self.battleState))
+end
+
+function TakeTurnState:attack(attacker, defender, attackerSprite, defenderSprite, defenderBar, onEnd)
     
     -- first, push a message saying who's attacking, then flash the attacker
     -- this message is not allowed to take input at first, so it stays on the stack
