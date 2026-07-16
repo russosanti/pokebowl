@@ -43,7 +43,7 @@ end
 
 function CatchState:attemptCatch()
     -- 70% chance to catch
-    if math.random(10) > 2 then
+    if math.random(10) > 7 then
         self.ballVisible = false
         self:failCatch(self.opponentPokemon.name .. ' broke free!')
         return
@@ -76,7 +76,7 @@ function CatchState:failCatch(message)
         message,
         function()
             gStateStack:pop()
-            gStateStack:push(BattleMenuState(self.battleState))
+            gStateStack:push(TakeTurnState(self.battleState, { opponentOnly = true }))
         end
     ))
 end
