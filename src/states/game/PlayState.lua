@@ -18,6 +18,15 @@ function PlayState:init()
 end
 
 function PlayState:update(dt)
+
+    if not self.dialogueOpened and love.keyboard.wasPressed('m') then
+        gSounds['blip']:stop()
+        gSounds['blip']:play()
+        gStateStack:push(PartyState(self.level.player.party))
+
+        return
+    end
+
     if not self.dialogueOpened and love.keyboard.wasPressed('p') then
         
         -- heal player pokemon
