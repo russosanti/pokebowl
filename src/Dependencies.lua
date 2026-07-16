@@ -70,6 +70,7 @@ gTextures = {
     ['bamboon-front'] = love.graphics.newImage('graphics/pokemon/bamboon-front.png'),
     ['cardiwing-back'] = love.graphics.newImage('graphics/pokemon/cardiwing-back.png'),
     ['cardiwing-front'] = love.graphics.newImage('graphics/pokemon/cardiwing-front.png'),
+    ['pokeball'] = love.graphics.newImage('graphics/ball.png'),
 }
 
 gFrames = {
