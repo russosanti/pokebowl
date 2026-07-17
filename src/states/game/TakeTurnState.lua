@@ -167,31 +167,22 @@ function TakeTurnState:faint()
     :finish(function()
         
         -- when finished, push a loss message
-        gStateStack:push(BattleMessageState('You fainted!',
+        gStateStack:push(BattleMessageState(self.playerPokemon.name .. ' fainted!',
     
         function()
-
-            -- fade in black
-            gStateStack:push(FadeInState({
-                r = 0, g = 0, b = 0
-            }, 1,
-            function()
-                
-                -- restore player pokemon to full health
-                self.battleState.player.party:healAll()
-
-                -- resume field music
-                gSounds['battle-music']:stop()
-                gSounds['field-music']:play()
-                
-                -- pop off the battle state and back into the field
-                gStateStack:pop()
-                gStateStack:push(FadeOutState({
-                    r = 0, g = 0, b = 0
-                }, 1, function() 
-                    gStateStack:push(DialogueState('Your Pokemon has been fully restored; try again!'))
-                end))
-            end))
+            local party = self.battleState.player.party
+            if party:hasAlivePokemon() then
+                gStateStack:push(PartyState(party, {
+                    aliveOnly = true,
+                    mustSelect = true,
+                    title = 'Choose a new Pokemon!',
+                    onSelect = function(index, pokemon)
+                        self.battleState:sendOutPlayerPokemon(pokemon)
+                    end
+                }))
+            else
+                self:loseBattle()
+            end
         end))
     end)
 end
@@ -304,4 +295,26 @@ function TakeTurnState:showLevelUpMenu(HPIncrease, attackIncrease, defenseIncrea
             stat('Speed', self.playerPokemon.speed, speedIncrease)
         }
     })
+end
+
+function TakeTurnState:loseBattle()
+	-- fade in black
+	gStateStack:push(FadeInState({r = 0, g = 0, b = 0, }, 1,
+		function()
+			-- restore player pokemon to full health
+			self.battleState.player.party:healAll()
+
+			-- resume field music
+			gSounds["battle-music"]:stop()
+			gSounds["field-music"]:play()
+
+			-- pop off the battle state and back into the field
+			gStateStack:pop()
+			gStateStack:push(FadeOutState({r = 0, g = 0, b = 0, }, 1,
+				function()
+					gStateStack:push(DialogueState("Your Pokemon has been fully restored; try again!"))
+				end
+			))
+		end
+	))
 end

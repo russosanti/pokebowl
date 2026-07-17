@@ -150,3 +150,38 @@ function BattleState:triggerStartingDialogue()
         end))
     end))
 end
+
+function BattleState:sendOutPlayerPokemon(pokemon)
+    self.playerPokemon = pokemon
+
+    -- Reuse the existing BattleSprite and its shader.
+    self.playerSprite.texture = pokemon.battleSpriteBack
+
+    self.playerSprite.x = 32
+    self.playerSprite.y = VIRTUAL_HEIGHT
+    self.playerSprite.opacity = 1
+    self.playerSprite.blinking = false
+
+    self.playerHealthBar:setMax(pokemon.HP)
+    self.playerHealthBar:setValue(pokemon.currentHP)
+
+    self.playerExpBar:setMax(pokemon.expToLevel)
+    self.playerExpBar:setValue(pokemon.currentExp)
+
+    -- Keep input disabled during the send-out animation.
+    gStateStack:push(BattleMessageState('Go, ' .. pokemon.name .. '!',
+        function() end,
+        false
+    ))
+
+    Timer.tween(0.5, {
+        [self.playerSprite] = {
+            y = VIRTUAL_HEIGHT - 128
+        }
+    }):finish(function()
+        -- Remove the non-interactive send-out message.
+        gStateStack:pop()
+        -- The replacement starts a fresh turn.
+        gStateStack:push(BattleMenuState(self))
+    end)
+end
