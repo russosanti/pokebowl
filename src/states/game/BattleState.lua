@@ -23,9 +23,13 @@ function BattleState:init(player)
         }
     }
 
-    self.playerSprite = BattleSprite(self.player.party.pokemon[1].battleSpriteBack, 
+    -- references to active pokemon used to support selection
+    self.playerPokemon = self.player.party:getSelectedPokemon()
+    self.opponentPokemon = self.opponent.party:getSelectedPokemon()
+
+    self.playerSprite = BattleSprite(self.playerPokemon.battleSpriteBack, 
         -64, VIRTUAL_HEIGHT - 128)
-    self.opponentSprite = BattleSprite(self.opponent.party.pokemon[1].battleSpriteFront, 
+    self.opponentSprite = BattleSprite(self.opponentPokemon.battleSpriteFront, 
         VIRTUAL_WIDTH, 8)
 
     -- health bars for pokemon
@@ -35,8 +39,8 @@ function BattleState:init(player)
         width = 152,
         height = 6,
         color = {r = 189/255, g = 32/255, b = 32/255},
-        value = self.player.party.pokemon[1].currentHP,
-        max = self.player.party.pokemon[1].HP
+        value = self.playerPokemon.currentHP,
+        max = self.playerPokemon.HP
     }
 
     self.opponentHealthBar = ProgressBar {
@@ -45,8 +49,8 @@ function BattleState:init(player)
         width = 152,
         height = 6,
         color = {r = 189/255, g = 32/255, b = 32/255},
-        value = self.opponent.party.pokemon[1].currentHP,
-        max = self.opponent.party.pokemon[1].HP
+        value = self.opponentPokemon.currentHP,
+        max = self.opponentPokemon.HP
     }
 
     -- exp bar for player
@@ -56,8 +60,8 @@ function BattleState:init(player)
         width = 152,
         height = 6,
         color = {r = 32/255, g = 32/255, b = 189/255},
-        value = self.player.party.pokemon[1].currentExp,
-        max = self.player.party.pokemon[1].expToLevel
+        value = self.playerPokemon.currentExp,
+        max = self.playerPokemon.expToLevel
     }
 
     -- flag for rendering health (and exp) bars, shown after pokemon slide in
@@ -66,10 +70,6 @@ function BattleState:init(player)
     -- circles underneath pokemon that will slide from sides at start
     self.playerCircleX = -68
     self.opponentCircleX = VIRTUAL_WIDTH + 32
-
-    -- references to active pokemon
-    self.playerPokemon = self.player.party.pokemon[1]
-    self.opponentPokemon = self.opponent.party.pokemon[1]
 end
 
 function BattleState:enter(params)
@@ -137,16 +137,51 @@ end
 function BattleState:triggerStartingDialogue()
     
     -- display a dialogue first for the pokemon that appeared, then the one being sent out
-    gStateStack:push(BattleMessageState('A wild ' .. tostring(self.opponent.party.pokemon[1].name ..
-        ' appeared!'),
+    gStateStack:push(BattleMessageState('A wild ' .. tostring(self.opponentPokemon.name) ..
+        ' appeared!',
     
     -- callback for when the battle message is closed
     function()
-        gStateStack:push(BattleMessageState('Go, ' .. tostring(self.player.party.pokemon[1].name .. '!'),
+        gStateStack:push(BattleMessageState('Go, ' .. tostring(self.playerPokemon.name) .. '!',
     
         -- push a battle menu onto the stack that has access to the battle state
         function()
             gStateStack:push(BattleMenuState(self))
         end))
     end))
+end
+
+function BattleState:sendOutPlayerPokemon(pokemon)
+    self.playerPokemon = pokemon
+
+    -- Reuse the existing BattleSprite and its shader.
+    self.playerSprite.texture = pokemon.battleSpriteBack
+
+    self.playerSprite.x = 32
+    self.playerSprite.y = VIRTUAL_HEIGHT
+    self.playerSprite.opacity = 1
+    self.playerSprite.blinking = false
+
+    self.playerHealthBar:setMax(pokemon.HP)
+    self.playerHealthBar:setValue(pokemon.currentHP)
+
+    self.playerExpBar:setMax(pokemon.expToLevel)
+    self.playerExpBar:setValue(pokemon.currentExp)
+
+    -- Keep input disabled during the send-out animation.
+    gStateStack:push(BattleMessageState('Go, ' .. pokemon.name .. '!',
+        function() end,
+        false
+    ))
+
+    Timer.tween(0.5, {
+        [self.playerSprite] = {
+            y = VIRTUAL_HEIGHT - 128
+        }
+    }):finish(function()
+        -- Remove the non-interactive send-out message.
+        gStateStack:pop()
+        -- The replacement starts a fresh turn.
+        gStateStack:push(BattleMenuState(self))
+    end)
 end
