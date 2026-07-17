@@ -6,7 +6,7 @@ PartyState = Class{__includes = BaseState}
 
 function PartyState:init(party)
     self.party = party
-    self.currentIndex = 1
+    self.currentIndex = self.party:getSelectedIndex() or 1
 
     self.panel = Panel(16, 16, VIRTUAL_WIDTH - 32, VIRTUAL_HEIGHT - 32)
 end
@@ -23,6 +23,8 @@ function PartyState:update(dt)
         self:changePokemon(-1)
     elseif love.keyboard.wasPressed('right') then
         self:changePokemon(1)
+    elseif love.keyboard.wasPressed('return') or love.keyboard.wasPressed('enter') then
+        self:selectCurrentPokemon()
     end
 end
 
@@ -37,6 +39,21 @@ function PartyState:changePokemon(direction)
     
     gSounds['blip']:stop()
     gSounds['blip']:play()
+end
+
+function PartyState:selectCurrentPokemon()
+    local selected, reason =
+        self.party:selectPokemon(self.currentIndex)
+
+    gSounds['blip']:stop()
+    gSounds['blip']:play()
+
+    if not selected and reason == 'fainted' then
+        gStateStack:push(DialogueState(
+            'A fainted Pokemon cannot be selected!',
+            function() end
+        ))
+    end
 end
 
 function PartyState:render()
@@ -63,7 +80,7 @@ function PartyState:render()
     else
         local creature = self.party.pokemon[self.currentIndex]
 
-        self:renderCreature(creature)
+        self:renderCreature(creature, self.party:isSelected(self.currentIndex))
         self:renderStats(creature)
     end
 
@@ -93,7 +110,7 @@ function PartyState:renderHeader(partySize)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function PartyState:renderCreature(creature)
+function PartyState:renderCreature(creature, isSelected)
     love.graphics.setColor(1, 1, 1, 1)
 
     -- All front creature textures are natively 64 by 64.
@@ -101,6 +118,16 @@ function PartyState:renderCreature(creature)
 
     love.graphics.setFont(gFonts['medium'])
     love.graphics.print(creature.name, 152, 58)
+
+    if isSelected then
+        love.graphics.setColor(45/255, 184/255, 45/255, 1)
+        love.graphics.rectangle('fill', 272, 58, 80, 16, 3)
+
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setFont(gFonts['small'])
+
+        love.graphics.printf('SELECTED', 272, 62, 80, 'center')
+    end
 
     love.graphics.setFont(gFonts['small'])
     love.graphics.print('Level: ' .. tostring(creature.level), 152, 78)
@@ -152,7 +179,7 @@ function PartyState:renderFooter()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(gFonts['small'])
 
-    love.graphics.print('Left / Right: Change Creature', 28, 184)
-
-    love.graphics.printf('M: Close', 280, 184, 72, 'right')
+    love.graphics.printf('Left / Right: Change Creature', 24, 178, VIRTUAL_WIDTH - 48, 'center')
+    love.graphics.print('Enter: Select', 28, 188)
+    love.graphics.printf('M: Close', 280, 188, 72, 'right')
 end

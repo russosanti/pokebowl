@@ -31,10 +31,10 @@ function PlayState:update(dt)
         
         -- heal player pokemon
         gSounds['heal']:play()
-        self.level.player.party.pokemon[1].currentHP = self.level.player.party.pokemon[1].HP
+        self.level.player.party:healAll()
         
         -- show a dialogue for it, allowing us to do so again when closed
-        gStateStack:push(DialogueState('Your Pokemon has been healed!',
+        gStateStack:push(DialogueState('Your Pokemon have been healed!',
             function()
                 self.dialogueOpened = false
             end))

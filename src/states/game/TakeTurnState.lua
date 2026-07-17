@@ -9,8 +9,8 @@ function TakeTurnState:init(battleState, options)
     self.battleState = battleState
     options = options or {}
     self.opponentOnly = options.opponentOnly or false
-    self.playerPokemon = self.battleState.player.party.pokemon[1]
-    self.opponentPokemon = self.battleState.opponent.party.pokemon[1]
+    self.playerPokemon = self.battleState.playerPokemon
+    self.opponentPokemon = self.battleState.opponentPokemon
 
     self.playerSprite = self.battleState.playerSprite
     self.opponentSprite = self.battleState.opponentSprite
@@ -178,7 +178,7 @@ function TakeTurnState:faint()
             function()
                 
                 -- restore player pokemon to full health
-                self.playerPokemon.currentHP = self.playerPokemon.HP
+                self.battleState.player.party:healAll()
 
                 -- resume field music
                 gSounds['battle-music']:stop()
